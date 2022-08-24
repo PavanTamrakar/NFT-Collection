@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IWhitelist.sol";
 
-contract CryptoDevs is ERC721Enumerable, Ownable {
+contract GandhiMoney is ERC721Enumerable, Ownable {
     string _baseTokenURI;
 
     IWhitelist whitelist;
@@ -18,8 +18,15 @@ contract CryptoDevs is ERC721Enumerable, Ownable {
 
     uint256 public _price = 0.01 ether;
 
-    constructor (string memory _baseURI, address whitelistAddress) ERC721 ("Crypto Devs", "CD") {
-        _baseTokenURI = _baseURI;
+    bool public _paused;
+
+    modifier onlyWhenNotPaused{
+        require (!_paused, "Currently Paused");
+        _;
+    }
+
+    constructor(string memory baseURI, address whitelistAddress)ERC721("Gandhi Money", "GM") {
+        _baseTokenURI = baseURI;
         whitelist = IWhitelist(whitelistContract);
     }
 
@@ -36,7 +43,36 @@ contract CryptoDevs is ERC721Enumerable, Ownable {
         tokenIds =+ 1;
 
         _safeMint(msg.sender, tokenIds);
-        
+
     }
 
+    function mint () public payable onlyWhenNotPaused {
+        require(presaleStarted && block.timestamp >= presaleEnded, "PreSale Ended");
+        require(whitelist.WhitelistedAddresses(msg.sender), "Not in the Whitelis");
+        require(tokenIds < maxTokenIds, "Eceeded the limit");
+        require(msg.value >= _price);
+        tokenIds =+ 1;
+
+        _safeMint(msg.sender, tokenIds);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
+        uint256 amount = address(this).balance;
+        (bool, sent) = _owner.call{value: amount}("");
+        require(condition);
+    }
+
+    function setPaused(bool val) public onlyOwner{
+        _paused = val;
+    } 
+
+    function withdraw() public onlyOwner{
+        address _owner = owner();
+
+    }
+
+    receive() external payable{}
+
+    fallback() external payable{}
 }
